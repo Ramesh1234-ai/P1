@@ -46,15 +46,6 @@ export default function Login() {
       alert("Server error");
     }
   };
-  const { getToken } = useAuth();
-useEffect(() => {
-  const fetchToken = async () => {
-    const token = await getToken();
-    console.log("TOKEN:", token);
-  };
-
-  fetchToken();
-}, []);
   return (
     <AuthLayout
       title="Welcome Back"
