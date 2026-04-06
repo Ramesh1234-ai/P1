@@ -1,0 +1,13 @@
+docs/
+vod/
+recordings/
+hls/
+backend/.env
+backend/api/
+backend/.env.example
+backend/nginx.rtmp.conf
+backend/node_modules
+@latest/.env
+@latest/.vercel
+@latest/dist/
+@latest/node_modules
