@@ -1,5 +1,6 @@
 docs/
 vod/
+logs/
 recordings/
 hls/
 backend/.env
