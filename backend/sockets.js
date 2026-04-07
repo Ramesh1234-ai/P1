@@ -103,7 +103,6 @@ export const setupStreamSockets = (io) => {
           resolution,
           health,
         });
-
         console.log(`📊 Metrics for ${streamId}: ${bitrate}Kbps @ ${fps}fps [${health}]`);
       } catch (err) {
         console.error("Error updating metrics:", err);
@@ -138,20 +137,17 @@ export const setupStreamSockets = (io) => {
             // Continue even if recording fails
           }
         }
-
         io.to(streamId).emit("stream-status", {
           isLive: true,
           status: "live",
           recording: true,
           timestamp: new Date(),
         });
-
         console.log(`🔴 Stream ${streamId} is now LIVE`);
       } catch (err) {
         console.error("Error starting stream:", err);
       }
     });
-
     // ⏹️ STREAM ENDED - Encoder disconnects
     socket.on("stream-ended", async ({ streamId }) => {
       try {
@@ -161,7 +157,6 @@ export const setupStreamSockets = (io) => {
         const duration = Math.floor(
           (new Date() - stream.metrics.startTime) / 1000
         );
-
         // ✅ STOP FFMPEG RECORDING
         try {
           await stopRecording(streamId);
@@ -253,5 +248,4 @@ export const setupStreamSockets = (io) => {
     });
   });
 };
-
 export { activeStreams };

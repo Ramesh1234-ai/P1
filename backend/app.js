@@ -8,7 +8,7 @@ import profileRoutes from "./route/profile.route.js";
 import paymentRoutes from "./route/payment.route.js";
 import analyticsRoutes from "./route/analytics.route.js";
 import cors from "cors";
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import { clerkMiddleware } from "@clerk/express";
 import { generateChatResponse } from "./controller/gemini.controller.js";
 const app = express();
 app.use(cors());

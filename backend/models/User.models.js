@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    clerkId: {
+      type: String,
+      required: true,
+      unique: true
+    },
     notifications: {
       emailNotifications: {
         type: Boolean,

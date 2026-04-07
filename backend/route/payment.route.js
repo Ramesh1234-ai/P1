@@ -7,7 +7,7 @@ import {
   getPaymentStats,
   deletePayment,
 } from "../controller/payment.controller.js";
-import { verifyClerkToken } from "../middleware/clerk-token.middleware.js";
+import { requireAuth } from "@clerk/express";
 const router = express.Router();
 /**
  * Payment API Routes
@@ -18,14 +18,13 @@ const router = express.Router();
 router.get("/verify/:transactionId", verifyPayment);
 // ==================== PROTECTED ROUTES (Clerk Auth) ====================
 // Create payment
-router.post("/create", verifyClerkToken, createPayment);
+router.post("/create", requireAuth, createPayment);
 // Get payment history for user
-router.get("/history/:userId", verifyClerkToken, getPaymentHistory);
+router.get("/history/:userId", requireAuth, getPaymentHistory);
 // Get payment statistics
-router.get("/stats/:userId", verifyClerkToken, getPaymentStats);
+router.get("/stats/:userId", requireAuth, getPaymentStats);
 // Update payment status
-router.put("/status/:transactionId", verifyClerkToken, updatePaymentStatus);
+router.put("/status/:transactionId", requireAuth, updatePaymentStatus);
 // Delete payment record
-router.delete("/:transactionId", verifyClerkToken, deletePayment);
-
+router.delete("/:transactionId",requireAuth, deletePayment);
 export default router;

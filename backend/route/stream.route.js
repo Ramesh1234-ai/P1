@@ -12,11 +12,11 @@ import {
   getRecordingStatusEndpoint,
   getAllActiveRecordings,
 } from "../controller/stream.controller.js";
-import { verifyClerkToken } from "../middleware/clerk-token.middleware.js";
+import { requireAuth } from "@clerk/express";
 const router = express.Router();
 // 🔧 Stream Management
-router.post("/create", verifyClerkToken, createStream); // Create stream and get stream key
-router.put("/end/:id", verifyClerkToken, endStream); // End stream
+router.post("/create", requireAuth, createStream); // Create stream and get stream key
+router.put("/end/:id", requireAuth, endStream); // End stream
 router.get("/live", getLiveStreams); // Get all live streams
 router.get("/:id", getStreamById); // Get stream details
 // 📊 Stream Metrics & Analytics

@@ -6,14 +6,10 @@ import {
   updateUserSettings,
   getAnalytics
 } from "../controller/profile.controller.js";
-import { verifyClerkToken, requireAuth } from "../middleware/clerk-token.middleware.js";
-
+import {requireAuth } from "@clerk/express";
 const route = express.Router();
-
 // All routes protected with Clerk JWT verification
-route.use(verifyClerkToken);
 route.use(requireAuth);
-
 // Profile routes
 route.get("/profile/:userId", getUserProfile);
 route.put("/profile/:userId", updateUserProfile);
