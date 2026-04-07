@@ -11,7 +11,10 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import { generateChatResponse } from "./controller/gemini.controller.js";
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 // middleware
 app.use(express.json());
 app.use(clerkMiddleware());

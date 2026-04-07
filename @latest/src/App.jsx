@@ -20,8 +20,8 @@ import PaymentForm from "./components/payment/PaymentForm";
 import PaymentHistory from "./components/payment/PaymentHistory";
 import PaymentStats from "./components/payment/PaymentStats";
 import Payment from "./components/pages/payment";
-import { useAuth } from "@clerk/react";
 import { useEffect } from "react";
+import { useAuth } from "@clerk/react";
 import { setClerkTokenProvider } from "./services/apiClient";
 
 export function ClerkTokenProviderSetup() {

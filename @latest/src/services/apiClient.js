@@ -94,7 +94,9 @@ export const settingsAPI = {
 // Analytics API
 export const analyticsAPI = {
   getAnalytics: (userId, range = "7days") =>
-    apiClient.get(`/analytics/${userId}`, { params: { range } }),
+  apiClient.get(`/analytics/user/${userId}`, {
+    params: { range }
+  }),
   getStreamAnalytics: (streamId) =>
     apiClient.get(`/analytics/stream/${streamId}`),
   getUserAnalytics: (userId) => apiClient.get(`/analytics/user/${userId}`),

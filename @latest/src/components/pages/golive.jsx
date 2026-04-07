@@ -18,18 +18,18 @@ export default function GoLiveDashboard() {
   const [viewers, setViewers] = useState(0);
   const [streamId, setStreamId] = useState(null);
   const chatEndRef = useRef(null);
+  const { streamKey1, rtmpUrl } = response.data;
   const currentUser = JSON.parse(localStorage.getItem("user")) || { username: "Streamer" };
-  useEffect(() => {
+  useEffect( () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
   // 🔥 Handle going live - Create or join stream
   useEffect(() => {
     if (isLive && !streamId) {
       // Create a new stream when going live
       const createStream = async () => {
         try {
-          const response = await fetch("http://localhost:5000/api/streams", {
+          const response = await fetch("http://localhost:5000/api/streams/create", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -79,7 +79,6 @@ export default function GoLiveDashboard() {
     socket.on("receive-message", (data) => {
       setMessages((prev) => [...prev, data]);
     });
-
     socket.on("viewer-count", (count) => {
       setViewers(count);
     });
@@ -100,21 +99,17 @@ export default function GoLiveDashboard() {
       user: currentUser?.username || "Streamer",
       sender: "me",
     });
-
     setMessage("");
   };
-
   const handleKeyDown = (e) => {
     if (e.key === "Enter") handleSend();
   };
-
   const handleSelectMessage = (msg) => {
     if (msg.sender !== "me") {
       setSelectedMessage(msg.text);
       setShowAISuggestions(true);
     }
   };
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -241,11 +236,10 @@ export default function GoLiveDashboard() {
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setIsLive((v) => !v)}
-                  className={`px-8 py-2 rounded-lg font-bold transition transform hover:scale-105 ${
-                    isLive
+                  className={`px-8 py-2 rounded-lg font-bold transition transform hover:scale-105 ${isLive
                       ? "bg-gray-900 text-white hover:bg-gray-800"
                       : "bg-red-500 text-white hover:bg-red-600 shadow-md"
-                  }`}
+                    }`}
                 >
                   {isLive ? "⏹ End Stream" : "● Go Live"}
                 </button>
@@ -286,11 +280,10 @@ export default function GoLiveDashboard() {
                       )}
                       <div
                         onClick={() => handleSelectMessage(msg)}
-                        className={`px-3 py-2 rounded-lg cursor-pointer transition ${
-                          msg.sender === "me"
+                        className={`px-3 py-2 rounded-lg cursor-pointer transition ${msg.sender === "me"
                             ? "bg-red-500 text-white rounded-tr-none"
                             : "bg-gray-100 text-gray-900 rounded-tl-none hover:bg-gray-200"
-                        } ${msg.sender !== "me" ? "group" : ""}`}
+                          } ${msg.sender !== "me" ? "group" : ""}`}
                       >
                         <p className="text-sm leading-relaxed">{msg.message || msg.text}</p>
                         {msg.sender !== "me" && (
