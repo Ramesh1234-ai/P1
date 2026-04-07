@@ -1,3 +1,4 @@
+import { ChatModeration } from "./controller/chat.controller.js";
 import Stream from "./models/stream.models.js";
 import {
   startRecording,
@@ -246,6 +247,25 @@ export const setupStreamSockets = (io) => {
         console.error("Error on disconnect:", err);
       }
     });
+    // Chat Moderation using WebSocket
+    socket.on('send_message'),async(data)=>{
+      const {content}=data;
+      const moderation = await ChatModeration(content)
+       if(moderation.flagged){
+        socket.emit("Message Blocked",{
+               reason:"Content Violtion"          
+        });
+        return;
+       }
+       const message=await message.create({
+         ...data,
+          moderation:{
+            flagged:false
+          }
+         }
+       );
+       io.to(data.chatId).emit("recive_message",message);
+    }
   });
 };
 export { activeStreams };

@@ -25,6 +25,7 @@ app.use("/api", profileRoutes);
 app.use("/api/gemini", generateChatResponse);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.usr("/api/follower",FolllowerRoutes)
 app.get("/api/analytics/report/:userId", (req, res) => {
   console.log("✅ REPORT API HIT");
   res.json({ ok: true });

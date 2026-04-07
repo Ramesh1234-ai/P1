@@ -1,3 +1,4 @@
+import  User from "../models/User.models.js"
 export const getProfile = async (req, res) => {
   try {
     const clerkId = req.auth.userId;

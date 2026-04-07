@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getFollow } from "../../../backend/controller/follow.controller";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -24,9 +25,8 @@ export const setClerkTokenProvider = (fn) => {
 // ─── Axios instance ───────────────────────────────────────────────────────────
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 20000,
 });
-
 // ─── Request interceptor — attach Clerk token ─────────────────────────────────
 apiClient.interceptors.request.use(
   async (config) => {
@@ -125,5 +125,11 @@ export const paymentAPI = {
 export const userAPI = {
   getUserProfile: (userId) => apiClient.get(`/user/profile/${userId}`),
   getUserSettings: (userId) => apiClient.get(`/user/settings/${userId}`),
+};
+export const Follow ={
+  getFollow:(userId)=> apiClient.get(`/follower/follow/${userId}`),
+  getfollwoing:(userId) => apiClient.get(`/follower/following/${userId}`),
+  getUnfollow:(userId) =>apiClient.get(`/follower//Unfollow/${userId}`),
+  getfollwers:(userId) =>apiClient.get(`/follower/user/${userId}/followers`)
 };
 export default apiClient;
