@@ -19,7 +19,6 @@ import AnalyticsDashboard from "./components/pages/analyticsDashboard";
 import PaymentForm from "./components/payment/PaymentForm";
 import PaymentHistory from "./components/payment/PaymentHistory";
 import PaymentStats from "./components/payment/PaymentStats";
-import Payment from "./components/pages/payment";
 import { useEffect } from "react";
 import { useAuth } from "@clerk/react";
 import { setClerkTokenProvider } from "./services/apiClient";
@@ -56,7 +55,6 @@ export default function App() {
       <Route path="/Watch" element={<StreamLayout/>}/>
       <Route path="/stream/:id" element={<StreamPage/>} />
       <Route path="/Payment" element={<Payment/>}/>
-      <Route path="/Payment/form" element={<PaymentForm/>}/>
       <Route path="/Payment/form" element={<PaymentForm/>}/>
       <Route path="/Payment/History" element={<PaymentHistory/>}/>
       <Route path="/payment/stats" element={<PaymentStats/>}/>

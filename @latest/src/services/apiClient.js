@@ -1,5 +1,4 @@
 import axios from "axios";
-import { getFollow } from "../../../backend/controller/follow.controller";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
@@ -81,8 +80,8 @@ apiClient.interceptors.response.use(
 
 // Profile API
 export const profileAPI = {
-  getProfile: (userId) => apiClient.get(`/profile/${userId}`),
-  updateProfile: (userId, data) => apiClient.put(`/profile/${userId}`, data),
+  getProfile: (userId) => apiClient.get(`/auth/profile`),
+  updateProfile: (userId, data) => apiClient.put(`/auth/profile`, data),
 };
 
 // Settings API
