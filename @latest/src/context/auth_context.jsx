@@ -13,6 +13,10 @@ export const AppProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
+  // 🔑 NEW: Explicitly track if profile has been loaded (for ProtectedRoute)
+  // isSignedIn = Clerk says user is logged in
+  // isAuthenticated = We have fetched and cached the user profile
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   // Track if we've attempted to fetch (prevents double-fetch)
   const hasFetchedProfile = useRef(false);
   const hasFetchedAnalytics = useRef(false);
@@ -36,12 +40,14 @@ export const AppProvider = ({ children }) => {
       // Backend returns { success: true, user: {...} } or { success: true, msg: "...", user: {...} }
       const userData = res.data?.user || res.data;
       setUser(userData);
-      console.log("✅ [auth_context] Profile fetched successfully —", userData);
+      setIsAuthenticated(true); // ✅ Profile loaded successfully
+      console.log("✅ [auth_context] Profile fetched successfully — user is now AUTHENTICATED");
     } catch (err) {
       const status = err.response?.status;
       const errorMsg = err.response?.data?.msg || err.response?.data?.message || err.message || "Failed to fetch profile";
       console.error(`❌ [auth_context] Profile fetch failed (${status}):`, errorMsg);
       setError(errorMsg);
+      setIsAuthenticated(false); // ❌ Profile fetch failed, not authenticated
     } finally {
       setLoading(false);
     }
@@ -104,22 +110,30 @@ export const AppProvider = ({ children }) => {
       }
     } else {
       // Reset refs when user signs out
-      console.log("[auth_context] User signed out, resetting fetch guards...");
+      console.log("[auth_context] User signed out, resetting fetch guards and auth state...");
       hasFetchedProfile.current = false;
       hasFetchedAnalytics.current = false;
       setUser(null);
       setAnalytics(null);
       setError(null);
+      setIsAuthenticated(false); // ✅ User signed out, no longer authenticated
     }
   }, [isSignedIn, userId, fetchProfile, fetchAnalytics]);
 
   return (
     <AppContext.Provider
       value={{
+        // 🔑 Clerk state (primary auth source)
+        isSignedIn,  // ✅ From Clerk useAuth()
+        userId,      // ✅ From Clerk useAuth()
+        // 📊 auth_context state (profile + analytics)
         user,
         analytics,
-        loading,
         error,
+        // ⏳ Loading states
+        loading,
+        isAuthenticated,  // ✅ True only after profile fetch succeeds
+        // 🔧 Methods
         fetchProfile,
         fetchAnalytics,
       }}

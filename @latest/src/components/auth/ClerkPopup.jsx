@@ -1,35 +1,37 @@
 import { SignInButton, useUser } from "@clerk/react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
+
+// 🔑 Module-level variable to persist across component remounts
+// This ensures navigation happens EXACTLY ONCE even if component unmounts/remounts
+let hasNavigatedGlobally = false;
+
 export default function ClerkPopup() {
   const { isSignedIn } = useUser();
   const navigate = useNavigate();
-  
-  // ✅ Use ref to ensure we only navigate ONCE, even if dependencies change
-  // This prevents the "47+ navigations" infinite loop
-  const hasNavigated = useRef(false);
 
   useEffect(() => {
-    console.log(`[ClerkPopup] useEffect triggered — isSignedIn=${isSignedIn}, hasNavigated=${hasNavigated.current}`);
-    
-    // Guard 1: Only navigate if signed in
-    // Guard 2: Only navigate once (never again after first time)
-    if (isSignedIn && !hasNavigated.current) {
-      hasNavigated.current = true;
-      console.log("✅ [ClerkPopup] User signed in, navigating to /dashboard (ONE TIME)");
+    console.log(
+      `[ClerkPopup] useEffect triggered — isSignedIn=${isSignedIn}, hasNavigatedGlobally=${hasNavigatedGlobally}`
+    );
+
+    // Guard: Only navigate ONCE, globally, when user signs in
+    if (isSignedIn && !hasNavigatedGlobally) {
+      hasNavigatedGlobally = true;
+      console.log("✅ [ClerkPopup] User signed in, navigating to /dashboard (TRULY ONCE)");
       navigate("/dashboard", { replace: true });
     }
-    
-    // Reset guard when user signs out
-    if (!isSignedIn) {
-      console.log("[ClerkPopup] User signed out, resetting navigation guard");
-      hasNavigated.current = false;
-    }
-  }, [isSignedIn, navigate]); // Keep dependencies but guard prevents re-execution
 
-  // ✅ Only render signin button while not authenticated
+    // Reset flag when user signs out
+    if (!isSignedIn) {
+      console.log("[ClerkPopup] User signed out, allowing re-navigation");
+      hasNavigatedGlobally = false;
+    }
+  }, [isSignedIn, navigate]);
+
+  // ✅ Only render signin button while not signed in
   if (isSignedIn) {
-    return null; // Return null while navigating, don't render anything
+    return null; // Don't render anything; let ProtectedRoute handle the view
   }
 
   return (
