@@ -36,21 +36,23 @@ apiClient.interceptors.request.use(
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
           console.log(
-            `[apiClient] ✅ Clerk token attached to ${config.method?.toUpperCase()} ${config.url}`
+            `[apiClient] ✅ Token attached (${token.substring(0, 20)}...) to ${config.method?.toUpperCase()} ${config.url}`
           );
+          // Log token length for debugging
+          console.log(`[apiClient] Token length: ${token.length} chars`);
         } else {
-          console.warn(
-            `[apiClient] ⚠️ getToken() returned no token for ${config.method?.toUpperCase()} ${config.url} — user may not be signed in`
+          console.error(
+            `[apiClient] ❌ getToken() returned null/empty for ${config.method?.toUpperCase()} ${config.url} — user may not be signed in to Clerk`
           );
         }
       } else {
-        console.warn(
-          "[apiClient] ⚠️ Clerk token provider not set. " +
-            "Call setClerkTokenProvider(getToken) from useAuth()."
+        console.error(
+          "[apiClient] ❌ CRITICAL: Clerk token provider NOT set. " +
+            "Call setClerkTokenProvider(getToken) from ClerkTokenInit in main.jsx"
         );
       }
     } catch (err) {
-      console.error("[apiClient] ❌ Failed to retrieve Clerk token:", err);
+      console.error("[apiClient] ❌ Failed to retrieve Clerk token:", err.message);
     }
     return config;
   },

@@ -8,23 +8,47 @@ import { randomBytes } from "crypto";
  * Handles both:
  * 1. User exists → return profile
  * 2. User doesn't exist → auto-create with Clerk data
+ * 
+ * IMPORTANT: This route requires Clerk authentication
+ * Use: route.get("/profile", requireAuth(), getProfile);
  */
 export const getProfile = async (req, res) => {
   try {
+    // ✅ Extract Clerk ID from validated token
     const clerkId = req.auth?.userId;
-    
+    const clerkEmail = req.auth?.email;
+
+    // 🔴 No Clerk ID — means token validation failed
     if (!clerkId) {
+      console.error("❌ [getProfile] req.auth?.userId is undefined");
+      console.error("❌ [getProfile] req.auth object:", req.auth);
+      console.error("❌ [getProfile] This means Clerk middleware did not validate the token");
+      
       return res.status(401).json({ 
         success: false,
-        msg: "Not authenticated - Clerk ID missing" 
+        msg: "Not authenticated - Clerk ID missing",
+        debug: {
+          clerkId: clerkId || null,
+          authObject: req.auth ? Object.keys(req.auth) : null,
+          possibleCauses: [
+            "Token not sent by frontend",
+            "CLERK_SECRET_KEY not configured in backend .env",
+            "Token is expired",
+            "Token is not from Clerk"
+          ]
+        }
       });
     }
+
+    console.log(`[getProfile] ✅ Clerk ID extracted: ${clerkId}`);
+    console.log(`[getProfile] ✅ Clerk email: ${clerkEmail}`);
 
     // 1️⃣ Try to find existing user
     let user = await User.findOne({ clerkId }).select("-password");
     
     if (user) {
       // User exists, return profile
+      console.log(`[getProfile] ✅ User found in database: ${user._id}`);
       return res.json({ 
         success: true,
         msg: "Profile fetched",
@@ -32,11 +56,11 @@ export const getProfile = async (req, res) => {
       });
     }
 
-    // 2️⃣ User doesn't exist → Auto-create with minimal data
-    console.log(`📝 Auto-creating user for Clerk ID: ${clerkId}`);
+    // 2️⃣ User doesn't exist → Auto-create with data from Clerk
+    console.log(`📝 [getProfile] Auto-creating user for Clerk ID: ${clerkId}`);
     
-    // Get email and name from Clerk user data (if available)
-    const email = req.auth?.email || `user-${clerkId}@clerk.local`;
+    // Get email and name from Clerk user data (passed via Bearer token claims)
+    const email = clerkEmail || `user-${clerkId}@clerk.local`;
     const firstName = req.auth?.first_name || "User";
     const lastName = req.auth?.last_name || clerkId.slice(-6);
     
@@ -51,7 +75,7 @@ export const getProfile = async (req, res) => {
     });
 
     await user.save();
-    console.log(`✅ User auto-created for ${clerkId}`);
+    console.log(`✅ [getProfile] User auto-created for ${clerkId} (${email})`);
 
     res.status(201).json({ 
       success: true,
@@ -60,20 +84,20 @@ export const getProfile = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ Error in getProfile:", err.message);
+    console.error("❌ [getProfile] Error:", err.message);
     
-    // Handle duplicate clerkId (race condition)
+    // Handle duplicate clerkId (race condition from concurrent signups)
     if (err.code === 11000 && err.keyPattern?.clerkId) {
-      console.log("⚠️ Race condition: User already created, fetching...");
+      console.log("⚠️ [getProfile] Race condition: User already created, fetching...");
       try {
         const user = await User.findOne({ clerkId: req.auth.userId }).select("-password");
         return res.json({ 
           success: true,
-          msg: "Profile fetched (duplicate)",
+          msg: "Profile fetched (race condition recovery)",
           user 
         });
       } catch (innerErr) {
-        console.error("❌ Failed to recover from race condition:", innerErr);
+        console.error("❌ [getProfile] Failed to recover from race condition:", innerErr);
       }
     }
     

@@ -30,11 +30,15 @@ export const AppProvider = ({ children }) => {
 
   // 🚀 Fetch Profile - WRAPPED IN useCallback
   // ✅ Auto-fetches on first authentication, handles both new and existing users
+  // ✅ CRITICAL: userId is in dependencies to avoid stale closure
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       console.log("📡 [auth_context] Fetching profile from /api/auth/profile...");
+      console.log("[auth_context] Current userId from closure:", userId);
+      console.log("[auth_context] Current isSignedIn from closure:", isSignedIn);
+      
       const res = await profileAPI.getProfile();
       
       // Backend returns { success: true, user: {...} } or { success: true, msg: "...", user: {...} }
@@ -42,16 +46,38 @@ export const AppProvider = ({ children }) => {
       setUser(userData);
       setIsAuthenticated(true); // ✅ Profile loaded successfully
       console.log("✅ [auth_context] Profile fetched successfully — user is now AUTHENTICATED");
+      
     } catch (err) {
       const status = err.response?.status;
       const errorMsg = err.response?.data?.msg || err.response?.data?.message || err.message || "Failed to fetch profile";
+      const debugInfo = err.response?.data?.debug;
+      
       console.error(`❌ [auth_context] Profile fetch failed (${status}):`, errorMsg);
-      setError(errorMsg);
+      
+      if (debugInfo) {
+        console.error("[auth_context] Debug info from backend:", debugInfo);
+        console.error("[auth_context] Backend req.auth object was:", debugInfo.authObject);
+      }
+      
+      // Handle 401 explicitly
+      if (status === 401) {
+        console.error("[auth_context] ❌ 401 Unauthorized — Backend couldn't validate Clerk token");
+        console.error("[auth_context] Troubleshooting:");
+        console.error("  ✓ Check frontend .env.local has VITE_CLERK_PUBLISHABLE_KEY");
+        console.error("  ✓ Check backend .env has CLERK_SECRET_KEY");
+        console.error("  ✓ Ensure they match (same Clerk instance)");
+        console.error("  ✓ Verify token is being attached (check Network tab)");
+        setError("Authentication failed. Check Clerk configuration.");
+      } else {
+        setError(errorMsg);
+      }
+      
       setIsAuthenticated(false); // ❌ Profile fetch failed, not authenticated
+      
     } finally {
       setLoading(false);
     }
-  }, []); // ✅ Empty deps = function never recreated
+  }, [userId, isSignedIn]); // ✅ FIXED: Added userId and isSignedIn to dependencies
 
   // 📊 Fetch Analytics - WRAPPED IN useCallback
   // ✅ Only fetches after profile is available and userId is known
@@ -102,11 +128,21 @@ export const AppProvider = ({ children }) => {
         fetchProfile();
       }
       
-      // Fetch analytics only once (and only if userId is available)
-      if (!hasFetchedAnalytics.current && userId) {
+      // Fetch analytics ONLY if:
+      // 1. User is signed in
+      // 2. Profile has been fetched (isAuthenticated = true)
+      // 3. userId is available
+      // 4. We haven't attempted analytics yet
+      if (!hasFetchedAnalytics.current && userId && isAuthenticated) {
         hasFetchedAnalytics.current = true;
-        console.log("🔄 [auth_context] User authenticated, queuing analytics fetch...");
+        console.log("🔄 [auth_context] Profile loaded, queuing analytics fetch...");
         fetchAnalytics();
+      }
+      
+      // If profile fails, skip analytics
+      if (hasFetchedProfile.current && !isAuthenticated && !hasFetchedAnalytics.current) {
+        console.log("⏭️  [auth_context] Profile fetch failed, skipping analytics...");
+        hasFetchedAnalytics.current = true; // Mark as attempted to avoid retrying
       }
     } else {
       // Reset refs when user signs out
@@ -118,7 +154,7 @@ export const AppProvider = ({ children }) => {
       setError(null);
       setIsAuthenticated(false); // ✅ User signed out, no longer authenticated
     }
-  }, [isSignedIn, userId, fetchProfile, fetchAnalytics]);
+  }, [isSignedIn, userId, isAuthenticated, fetchProfile, fetchAnalytics]);
 
   return (
     <AppContext.Provider
