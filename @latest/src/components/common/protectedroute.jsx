@@ -1,8 +1,8 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
-import useAuth from '../../hooks/useAuth'
+import { useAppContext } from '../../context/auth_context'
 export default function ProtectedRoute({ children }) {
-	const { isSignedIn, loading } = useAuth()
+	const { isSignedIn, loading } = useAppContext()
 	if (loading) {
 		return (
 			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">

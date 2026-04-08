@@ -1,5 +1,5 @@
-import User from "../models/User.models";
-import { Folllower } from "../models/FollowerRelationShip.models";
+import User from "../models/User.models.js";
+import { Folllower } from "../models/FollowerRelationShip.models.js";
 export const getFollow = async (req, res, err, next) => {
     try {
         const followId = req.user.id();
@@ -53,7 +53,7 @@ export const getUnfollow = async (req, res, err, next) => {
         const followingId = req.param.UserId();
         if (!followId) (
             res.status(400).json({
-                messgae: { "you cant Follow This User"}
+                messgae:"You cant Follow This User"
             })
         )
         const follow = await follow.findByIdAndDelete({

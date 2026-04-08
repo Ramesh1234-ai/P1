@@ -1,11 +1,10 @@
 import { useState } from "react";
 import Navbar from "../common/navbar";
 import Sidebar from "../common/sidebar";
-import Stream from "./StreamPlayer";
+import Explore from "../pages/explore";
 import ChatbotWidget from "../chatbot/chatbot_widget";
-import Dashboard from "./StreamPlayer";
 
-export default function StreamLayout() {
+export default function ExploreLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   
   return (
@@ -27,13 +26,11 @@ export default function StreamLayout() {
           isCollapsed={isCollapsed} 
           setIsCollapsed={setIsCollapsed} 
         />
-        
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <Dashboard />
+          <Explore />
         </main>
-      </div>
-      
+      </div>      
       {/* Chatbot Widget */}
       <ChatbotWidget/>
     </div>

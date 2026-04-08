@@ -4,6 +4,7 @@ import AuthLayout from "./auth_layout";
 import ClerkPopup from "./ClerkPopup";
 import { motion } from "framer-motion";
 import { useAuth } from "@clerk/react";
+import { Toast } from "../common/toast";
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,7 +41,7 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       console.log("Login success:", data);
       navigate("/dashboard");
-
+      Toast.success("User SuccesFully Log In")
     } catch (err) {
       console.error(err);
       alert("Server error");

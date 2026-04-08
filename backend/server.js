@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import { setupStreamSockets } from "./sockets.js";
 import { initializeRecordingDirs } from "./utils/ffmpeg-recorder.js";
 import NodeMediaServer from "node-media-server";
+import connectDB from "./db/dbconnect.js"
 const PORT = process.env.PORT || 5000;
 const server = createServer(app);
 const io = new Server(server, {
@@ -37,10 +38,11 @@ nms.on('prePublish', (id, StreamPath, args) => {
 nms.on('donePublish', (id, StreamPath, args) => {
   console.log('Stream ended:', StreamPath);
 });
+connectDB();
 server.listen(PORT, () => {
+  console.log(`MongoDb is connected`)
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`📡 Waiting for RTMP streams at rtmp://localhost:1935/live/`);
+  console.log(`📡 Waiting for RTMP streams at rtmp://localhost:${process.env.Rmtp_port}/live/`);
   console.log(`🎥 Recording directories initialized`);
-  console.log("JWT_SECRET:", process.env.JWT_SECRET);
   console.log("RTMP Server running on port 1935");
 });

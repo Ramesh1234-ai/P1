@@ -1,12 +1,12 @@
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import Navbar from "../common/navbar";
 import Sidebar from "../common/sidebar";
-import Explore from "./explore";
+import Dashboard from "../pages/dashboard";
 import ChatbotWidget from "../chatbot/chatbot_widget";
-
-export default function ExploreLayout() {
+import GoLiveDashboard from "../pages/golive";
+export default function GoLiveLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -14,7 +14,6 @@ export default function ExploreLayout() {
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
-      
       {/* Main Section */}
       <div
         className={`flex flex-col flex-1 transition-all duration-300 ${
@@ -28,11 +27,9 @@ export default function ExploreLayout() {
         />
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <Explore />
+          <GoLiveDashboard />
         </main>
-      </div>      
-      {/* Chatbot Widget */}
-      <ChatbotWidget/>
+      </div>
     </div>
   );
 }

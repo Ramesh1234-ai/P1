@@ -1,6 +1,5 @@
-import Payment from "../models/Payment.model.js";
+import Payment from "../models/Payment.models.js";
 import mongoose from "mongoose";
-
 /**
  * Create a new payment record
  * POST /api/payment/create

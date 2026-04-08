@@ -1,16 +1,12 @@
 import mongoose from "mongoose";
 const ChatMessageSchema = new mongoose.Schema({
-    userId: {
+    UserId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user"
+        ref: "User"
     },
     sender: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user"
-    },
-    receiver: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user"
+        ref: "User"
     },
     chatMessage: {
         required: true,
@@ -30,7 +26,7 @@ const ChatMessageSchema = new mongoose.Schema({
         default: "",
     },
     reactions:{
-        userId:mongoose.Schema.Types.ObjectId,
+        type:mongoose.Schema.Types.ObjectId,
         ref:"User",
         emoji:String
     },
@@ -61,5 +57,4 @@ const ChatMessageSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-const Chat =mongoose.model("Chat",ChatMessageSchema)
-export {Chat}
+export const Message=mongoose.model("Message",ChatMessageSchema)

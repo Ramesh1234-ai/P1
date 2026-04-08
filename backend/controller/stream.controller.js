@@ -5,13 +5,11 @@ import {
   getRecordingStatus,
   getActiveRecordings,
 } from "../utils/ffmpeg-recorder.js";
-
 // 🎥 CREATE STREAM (Go Live)
 export const createStream = async (req, res) => {
   try {
     const { title, description, category } = req.body;
     const streamKey = uuidv4();
-    
     const stream = await Stream.create({
       title,
       description,
@@ -42,37 +40,31 @@ export const endStream = async (req, res) => {
     if (!stream) {
       return res.status(404).json({ msg: "Stream not found" });
     }
-
     stream.isLive = false;
     stream.endedAt = new Date();
     await stream.save();
-
     // Clean up from active streams
     if (activeStreams.has(req.params.id)) {
       activeStreams.delete(req.params.id);
     }
-
     res.json({ msg: "Stream ended", stream });
   } catch (err) {
     console.error("Error ending stream:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 // 📺 GET LIVE STREAMS
 export const getLiveStreams = async (req, res) => {
   try {
     const streams = await Stream.find({ isLive: true })
       .populate("creator", "username avatarUrl")
       .sort({ startedAt: -1 });
-
     res.json(streams);
   } catch (err) {
     console.error("Error getting live streams:", err);
     res.status(500).json({ error: err.message });
   }
 };
-
 // 🔍 GET STREAM BY ID
 export const getStreamById = async (req, res) => {
   try {
@@ -80,11 +72,9 @@ export const getStreamById = async (req, res) => {
       "creator",
       "username avatarUrl"
     );
-
     if (!stream) {
       return res.status(404).json({ msg: "Stream not found" });
     }
-
     // Get live metrics if stream is active
     let liveMetrics = null;
     if (activeStreams.has(req.params.id)) {
@@ -250,7 +240,6 @@ export const getRecordingStatusEndpoint = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 // 🎬 GET ALL ACTIVE RECORDINGS
 export const getAllActiveRecordings = async (req, res) => {
   try {

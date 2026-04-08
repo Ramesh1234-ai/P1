@@ -1,5 +1,6 @@
-import Analytics from "../models/Analytics.model.js";
+import Analytics from "../models/Analytics.models.js";
 import Stream from "../models/stream.models.js";
+import User from "../models/User.models.js";
 import mongoose from "mongoose";
 
 /**
@@ -135,25 +136,53 @@ export const getStreamAnalytics = async (req, res) => {
  */
 export const getUserAnalytics = async (req, res) => {
   try {
-    const { userId } = req.params;
+    // ✅ Support both Clerk middleware and URL params  
+    let userId = req.auth?.userId || req.params.userId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    if (!userId) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid user ID format",
-        code: "INVALID_USER_ID",
+        message: "User not authenticated",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
-    const userAnalytics = await Analytics.find({ userId }).sort({
+    // ✅ Convert Clerk userId to MongoDB ObjectId if needed
+    let mongoUserId = userId;
+    
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User profile not found",
+          code: "USER_NOT_FOUND",
+        });
+      }
+      mongoUserId = user._id;
+    }
+
+    const userAnalytics = await Analytics.find({ userId: mongoUserId }).sort({
       streamDate: -1,
     });
 
     if (userAnalytics.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No analytics found for this user",
-        code: "NO_ANALYTICS",
+      return res.status(200).json({
+        success: true,
+        message: "No analytics data yet",
+        aggregateStats: {
+          totalStreams: 0,
+          totalViewers: 0,
+          peakViewers: 0,
+          averageViewsPerStream: 0,
+          totalWatchTime: 0,
+          averageEngagement: 0,
+          totalFollowersGained: 0,
+          totalChatMessages: 0,
+          totalLikes: 0,
+          totalShares: 0,
+        },
+        recentStreams: [],
       });
     }
 
@@ -191,20 +220,37 @@ export const getUserAnalytics = async (req, res) => {
 
 /**
  * Get analytics within a date range
- * GET /api/analytics/range?userId=&startDate=&endDate=
+ * GET /api/analytics/range?startDate=&endDate=
  */
 export const getAnalyticsByDateRange = async (req, res) => {
   try {
-    const { userId, startDate, endDate } = req.query;
+    // ✅ Use Clerk's userId from middleware (query params no longer needed)
+    let userId = req.auth?.userId || req.query.userId;
 
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    if (!userId) {
+      return res.status(401).json({
         success: false,
-        message: "Valid user ID is required",
-        code: "INVALID_USER_ID",
+        message: "User not authenticated",
+        code: "NOT_AUTHENTICATED",
       });
     }
 
+    // ✅ Convert Clerk userId to MongoDB ObjectId if needed
+    let mongoUserId = userId;
+    
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      const user = await User.findOne({ clerkId: userId });
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User profile not found",
+          code: "USER_NOT_FOUND",
+        });
+      }
+      mongoUserId = user._id;
+    }
+
+    const { startDate, endDate } = req.query;
     const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default 30 days
     const end = endDate ? new Date(endDate) : new Date();
 
@@ -217,15 +263,20 @@ export const getAnalyticsByDateRange = async (req, res) => {
     }
 
     const analytics = await Analytics.find({
-      userId,
+      userId: mongoUserId,
       streamDate: { $gte: start, $lte: end },
     }).sort({ streamDate: -1 });
 
     if (analytics.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "No analytics found in this date range",
-        code: "NO_ANALYTICS",
+      return res.status(200).json({
+        success: true,
+        message: "No analytics in this date range",
+        analytics: [],
+        stats: {
+          totalStreams: 0,
+          totalViewers: 0,
+          totalWatchTime: 0,
+        }
       });
     }
 
@@ -263,20 +314,34 @@ export const getAnalyticsByDateRange = async (req, res) => {
  */
 export const generateAnalyticsReport = async (req, res) => {
   try {
-    const { userId } = req.params;
-
-    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({
+    // ✅ Support both:
+    // 1. Clerk userId from middleware (req.auth.userId) — prefer this
+    // 2. userId from URL params (for backward compatibility)
+    let userId = req.auth?.userId || req.params.userId;
+    if (!userId) {
+      return res.status(401).json({
         success: false,
-        message: "Invalid user ID format",
-        code: "INVALID_USER_ID",
+        message: "User not authenticated",
+        code: "NOT_AUTHENTICATED",
       });
     }
-
-    const userAnalytics = await Analytics.find({ userId }).sort({
+    // ✅ If userId is a Clerk string ID, look up the MongoDB user by clerkId
+    let mongoUserId = userId;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      // This is a Clerk ID (string), find the MongoDB user
+      const user = await User.findOne({ clerkId: userId }); 
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User profile not found. Please complete your profile setup.",
+          code: "USER_NOT_FOUND",
+        });
+      }
+      mongoUserId = user._id;
+    }
+    const userAnalytics = await Analytics.find({ userId: mongoUserId }).sort({
       streamDate: -1,
     });
-
     if (userAnalytics.length === 0) {
       return res.status(404).json({
         success: false,
@@ -284,7 +349,6 @@ export const generateAnalyticsReport = async (req, res) => {
         code: "NO_DATA",
       });
     }
-
     // Comprehensive report generation
     const report = {
       userId,

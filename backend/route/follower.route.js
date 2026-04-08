@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 router.post("/follow/:id",requireAuth,getFollow);
 router.delete("/Unfollow/:id",requireAuth,getUnfollow);
-router.get("/user/:userId:/followers",requireAuth,getFollowers);
-router.get("/users/:id/following",requireAuth,getFollowing);
-router.get(":/users:/id/check-status",requireAuth,CheckFollowStatus);
+router.get("/:userId/followers",requireAuth,getFollowers);
+router.get("/:id/following",requireAuth,getFollowing);
+router.get("/:id/check-status",requireAuth,CheckFollowStatus);
 export default router;

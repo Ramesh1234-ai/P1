@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "../common/navbar";
 import Sidebar from "../common/sidebar";
-import Dashboard from "./dashboard";
+import Dashboard from "../pages/dashboard";
 import ChatbotWidget from "../chatbot/chatbot_widget";
 export default function Layout() {
   const [isCollapsed, setIsCollapsed] = useState(false);

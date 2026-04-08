@@ -1,4 +1,5 @@
 import { ChatModeration } from "./controller/chat.controller.js";
+import { Message } from "./models/ChatMessage.models.js";
 import Stream from "./models/stream.models.js";
 import {
   startRecording,
@@ -38,7 +39,7 @@ export const setupStreamSockets = (io) => {
         }
 
         const stream = activeStreams.get(streamId);
-        
+
         // Add viewer to list
         stream.viewers.push({
           socketId: socket.id,
@@ -68,16 +69,43 @@ export const setupStreamSockets = (io) => {
     });
 
     // 💬 SEND MESSAGE - Real-time chat
-    socket.on("send-message", async ({ streamId, message, user, sender }) => {
+    socket.on("send-message", async (data) => {
       try {
-        io.to(streamId).emit("receive-message", {
+        const { streamId, message, userId, userName, sender } = data;
+
+        if (!streamId || !message) return;
+
+        // 🔐 Moderation
+        const moderation = await ChatModeration(message);
+
+        if (moderation.flagged) {
+          return socket.emit("message-blocked", {
+            reason: "Content violation",
+          });
+        }
+
+        // 💾 Save to DB
+        const newMessage = await Message.create({
+          streamId,
+          userId,
           message,
-          user: user || "Anonymous",
+          userName: userName || "Anonymous",
           sender: sender || "viewer",
-          timestamp: new Date(),
+          moderation: { flagged: false },
+          createdAt: new Date(),
         });
-      } catch (err) {
-        console.error("Error sending message:", err);
+
+        // 📡 Broadcast to stream
+        io.to(streamId).emit("receive-message", {
+          _id: newMessage._id,
+          message: newMessage.message,
+          userName: newMessage.userName,
+          sender: newMessage.sender,
+          timestamp: newMessage.createdAt,
+        });
+
+      } catch (error) {
+        console.error("Chat error:", error);
       }
     });
 
@@ -127,7 +155,7 @@ export const setupStreamSockets = (io) => {
           try {
             await startRecording(streamId, rtmpUrl, { creatorId });
             console.log(`🎥 Recording started for stream ${streamId}`);
-            
+
             // Notify viewers that recording started
             io.to(streamId).emit("recording-started", {
               message: "Stream recording started",
@@ -248,24 +276,6 @@ export const setupStreamSockets = (io) => {
       }
     });
     // Chat Moderation using WebSocket
-    socket.on('send_message'),async(data)=>{
-      const {content}=data;
-      const moderation = await ChatModeration(content)
-       if(moderation.flagged){
-        socket.emit("Message Blocked",{
-               reason:"Content Violtion"          
-        });
-        return;
-       }
-       const message=await message.create({
-         ...data,
-          moderation:{
-            flagged:false
-          }
-         }
-       );
-       io.to(data.chatId).emit("recive_message",message);
-    }
   });
 };
 export { activeStreams };

@@ -24,5 +24,4 @@ FollowerRelationShipSchema.index({
     CreatorId:1,
     unique:true
   });
-const Folllower =mongoose.model("Follower",FollowerRelationShipSchema);
-export {Folllower}
+export const Folllower =mongoose.model("Follower",FollowerRelationShipSchema);

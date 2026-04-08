@@ -2,9 +2,7 @@ import  User from "../models/User.models.js"
 export const getProfile = async (req, res) => {
   try {
     const clerkId = req.auth.userId;
-
     const user = await User.findOne({ clerkId }).select("-password");
-
     if (!user) {
       return res.status(404).json({ msg: "User not found" });
     }
@@ -26,7 +24,6 @@ export const updateProfile = async (req, res) => {
       ...(avatarUrl && { avatarUrl }),
       ...(username && { username }),
     };
-
     const user = await User.findOneAndUpdate(
       { clerkId },
       updateData,
@@ -63,7 +60,6 @@ export const generateAPIKey = async (req, res) => {
     const { name } = req.body;
 
     const apiKey = randomBytes(32).toString("hex");
-
     const user = await User.findOneAndUpdate(
       { clerkId },
       {
@@ -77,7 +73,6 @@ export const generateAPIKey = async (req, res) => {
       },
       { new: true }
     );
-
     res.json({ apiKey, user });
   } catch (err) {
     res.status(500).json(err);

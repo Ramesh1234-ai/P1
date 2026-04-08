@@ -6,12 +6,14 @@ import ResetPassword from "./components/auth/reset";
 import EmailSent from "./components/auth/mail";
 import SmartSearchBar from "./components/common/searchbar";
 import Navbar from "./components/common/navbar";
+import ProtectedRoute from "./components/common/protectedroute";
 import AboutUs from "./components/pages/Aboutus";
-import Layout from "./components/pages/ui_layout";
-import GoLiveLayout from "./components/pages/ui_layout_go";
-import ExploreLayout from "./components/pages/ui_layout_explore";
-import ProfileLayout from "./components/pages/ui_layout_profile";
-import StreamLayout from "./components/pages/ui_layout_stream";
+import { ErrorBoundary } from "./components/common/errorboundary";
+import Layout from "./components/ui_layout/ui_layout";
+import GoLiveLayout from "./components/ui_layout/ui_layout_go";
+import ExploreLayout from "./components/ui_layout/ui_layout_explore";
+import ProfileLayout from "./components/ui_layout/ui_layout_profile";
+import StreamLayout from "./components/ui_layout/ui_layout_stream";
 import StreamPage from "./components/profile/stream";
 import Profile from "./components/pages/profile";
 import Settings from "./components/pages/settings";
@@ -22,44 +24,44 @@ import PaymentStats from "./components/payment/PaymentStats";
 import { useEffect } from "react";
 import { useAuth } from "@clerk/react";
 import { setClerkTokenProvider } from "./services/apiClient";
-
+import Payment from "./components/pages/payment"
 export function ClerkTokenProviderSetup() {
   const { getToken } = useAuth();
-
   useEffect(() => {
     if (getToken) {
       setClerkTokenProvider(getToken);
     }
   }, [getToken]);
-
   return null;
 }
 export default function App() {
   return (
     <>
-    <ClerkTokenProviderSetup/>
-    <Routes>
-      <Route path="/" element={<AboutUs/>} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/email-sent" element={<EmailSent />} />
-      <Route path="/dashboard" element={<Layout/>} />
-      <Route path="/Live" element={<GoLiveLayout/>}/>
-      <Route path="/profile" element={<Profile/>}/>
-      <Route path="/settings" element={<Settings/>}/>
-      <Route path="/analytics" element={<AnalyticsDashboard/>}/>
-      <Route path="/Profile" element={<ProfileLayout/>}/>
-      <Route path="/Explore" element={<ExploreLayout/>}/>
-      <Route path="/Watch" element={<StreamLayout/>}/>
-      <Route path="/stream/:id" element={<StreamPage/>} />
-      <Route path="/Payment" element={<Payment/>}/>
-      <Route path="/Payment/form" element={<PaymentForm/>}/>
-      <Route path="/Payment/History" element={<PaymentHistory/>}/>
-      <Route path="/payment/stats" element={<PaymentStats/>}/>
-      <Route path="*" element={<div>404 Page</div>} />
-    </Routes>
+      <ClerkTokenProviderSetup />
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<AboutUs />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/email-sent" element={<EmailSent />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Layout /></ProtectedRoute>} />
+          <Route path="/Live" element={<ProtectedRoute><GoLiveLayout /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><AnalyticsDashboard /></ProtectedRoute>} />
+          <Route path="/Profile" element={<ProtectedRoute><ProfileLayout /></ProtectedRoute>} />
+          <Route path="/Explore" element={<ProtectedRoute><ExploreLayout /></ProtectedRoute>} />
+          <Route path="/Watch" element={<ProtectedRoute><StreamLayout /></ProtectedRoute>} />
+          <Route path="/stream/:id" element={<ProtectedRoute><StreamPage /></ProtectedRoute>} />
+          <Route path="/Payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
+          <Route path="/Payment/form" element={<ProtectedRoute><PaymentForm /></ProtectedRoute>} />
+          <Route path="/Payment/History" element={<ProtectedRoute><PaymentHistory /></ProtectedRoute>} />
+          <Route path="/payment/stats" element={<ProtectedRoute><PaymentStats /></ProtectedRoute>} />
+          <Route path="*" element={<div>404 Page</div>} />
+        </Routes>
+      </ErrorBoundary>
     </>
   );
 }

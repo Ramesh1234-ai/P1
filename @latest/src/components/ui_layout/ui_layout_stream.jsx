@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
 import Navbar from "../common/navbar";
 import Sidebar from "../common/sidebar";
-import Dashboard from "./dashboard";
+import Stream from "../pages/StreamPlayer";
 import ChatbotWidget from "../chatbot/chatbot_widget";
-import GoLiveDashboard from "./golive";
-export default function GoLiveLayout() {
+import Dashboard from "../pages/StreamPlayer";
+
+export default function StreamLayout() {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
@@ -14,6 +15,7 @@ export default function GoLiveLayout() {
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
       />
+      
       {/* Main Section */}
       <div
         className={`flex flex-col flex-1 transition-all duration-300 ${
@@ -25,11 +27,15 @@ export default function GoLiveLayout() {
           isCollapsed={isCollapsed} 
           setIsCollapsed={setIsCollapsed} 
         />
+        
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-gray-50">
-          <GoLiveDashboard />
+          <Dashboard />
         </main>
       </div>
+      
+      {/* Chatbot Widget */}
+      <ChatbotWidget/>
     </div>
   );
 }
