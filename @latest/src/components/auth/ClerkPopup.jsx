@@ -1,20 +1,31 @@
 import { SignInButton, useUser } from "@clerk/react";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-
+import { useEffect, useRef } from "react";
 export default function ClerkPopup() {
   const { isSignedIn } = useUser();
   const navigate = useNavigate();
+  
+  // ✅ Use ref to ensure we only navigate ONCE, even if dependencies change
+  // This prevents the "47+ navigations" infinite loop
+  const hasNavigated = useRef(false);
 
-  // ✅ Use useEffect to navigate INSTEAD of returning <Navigate> from render
-  // This prevents infinite loops from navigation during render
   useEffect(() => {
-    if (isSignedIn) {
-      console.log("✅ User signed in, navigating to dashboard");
-      // Use replace=true to prevent back button from returning to login
+    console.log(`[ClerkPopup] useEffect triggered — isSignedIn=${isSignedIn}, hasNavigated=${hasNavigated.current}`);
+    
+    // Guard 1: Only navigate if signed in
+    // Guard 2: Only navigate once (never again after first time)
+    if (isSignedIn && !hasNavigated.current) {
+      hasNavigated.current = true;
+      console.log("✅ [ClerkPopup] User signed in, navigating to /dashboard (ONE TIME)");
       navigate("/dashboard", { replace: true });
     }
-  }, [isSignedIn, navigate]);
+    
+    // Reset guard when user signs out
+    if (!isSignedIn) {
+      console.log("[ClerkPopup] User signed out, resetting navigation guard");
+      hasNavigated.current = false;
+    }
+  }, [isSignedIn, navigate]); // Keep dependencies but guard prevents re-execution
 
   // ✅ Only render signin button while not authenticated
   if (isSignedIn) {

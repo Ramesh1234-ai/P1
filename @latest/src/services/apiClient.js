@@ -35,15 +35,22 @@ apiClient.interceptors.request.use(
         const token = await _getClerkToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log(
+            `[apiClient] ✅ Clerk token attached to ${config.method?.toUpperCase()} ${config.url}`
+          );
+        } else {
+          console.warn(
+            `[apiClient] ⚠️ getToken() returned no token for ${config.method?.toUpperCase()} ${config.url} — user may not be signed in`
+          );
         }
       } else {
         console.warn(
-          "[apiClient] Clerk token provider not set. " +
+          "[apiClient] ⚠️ Clerk token provider not set. " +
             "Call setClerkTokenProvider(getToken) from useAuth()."
         );
       }
     } catch (err) {
-      console.error("[apiClient] Failed to retrieve Clerk token:", err);
+      console.error("[apiClient] ❌ Failed to retrieve Clerk token:", err);
     }
     return config;
   },

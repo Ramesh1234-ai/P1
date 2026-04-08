@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/react";
 import { setClerkTokenProvider } from "../services/apiClient";
 import { profileAPI, analyticsAPI } from "../services/apiClient";
 import { useAsyncError } from "../components/common/asyncerrorhandler";
+
 const AppContext = createContext();
 export const AppProvider = ({ children }) => {
   const { getToken, isSignedIn, userId } = useAuth();
@@ -11,6 +12,11 @@ export const AppProvider = ({ children }) => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Track if we've attempted to fetch (prevents double-fetch)
+  const hasFetchedProfile = useRef(false);
+  const hasFetchedAnalytics = useRef(false);
+
   // 🔑 Set Clerk token provider once
   useEffect(() => {
     if (getToken) {
@@ -18,73 +24,94 @@ export const AppProvider = ({ children }) => {
     }
   }, [getToken]);
 
-  // 🚀 Fetch Profile - WRAPPED IN useCallback TO PREVENT RECREATION
+  // 🚀 Fetch Profile - WRAPPED IN useCallback
+  // ✅ Auto-fetches on first authentication, handles both new and existing users
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      console.log("📡 [auth_context] Fetching profile from /api/auth/profile...");
       const res = await profileAPI.getProfile();
-      setUser(res.data);
-      console.log("✅ Profile fetched successfully");
+      
+      // Backend returns { success: true, user: {...} } or { success: true, msg: "...", user: {...} }
+      const userData = res.data?.user || res.data;
+      setUser(userData);
+      console.log("✅ [auth_context] Profile fetched successfully —", userData);
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Failed to fetch profile";
-      console.error("❌ Profile error:", errorMsg);
+      const status = err.response?.status;
+      const errorMsg = err.response?.data?.msg || err.response?.data?.message || err.message || "Failed to fetch profile";
+      console.error(`❌ [auth_context] Profile fetch failed (${status}):`, errorMsg);
       setError(errorMsg);
-      reportAsyncError({
-        message: errorMsg,
-        code: err.response?.status === 404 ? 'PROFILE_NOT_FOUND' : 'PROFILE_FETCH_ERROR',
-        originalError: err,
-      });
     } finally {
       setLoading(false);
     }
-  }, [reportAsyncError]);
+  }, []); // ✅ Empty deps = function never recreated
 
-  // 📊 Fetch Analytics - WRAPPED IN useCallback + PASS userId
+  // 📊 Fetch Analytics - WRAPPED IN useCallback
+  // ✅ Only fetches after profile is available and userId is known
   const fetchAnalytics = useCallback(async () => {
     // Only fetch if userId is available from Clerk
     if (!userId) {
-      console.warn("[auth_context] Skipping analytics fetch - userId not available yet");
+      console.warn("[auth_context] Skipping analytics - userId not available yet");
       return;
     }
     try {
       setLoading(true);
       setError(null);
-      // Pass userId to generateReport - backend extracts from Clerk auth context
+      console.log("📡 Fetching analytics for user:", userId);
       const res = await analyticsAPI.generateReport(userId);
-      setAnalytics(res.data);
+      
+      // Backend may return various formats, handle gracefully
+      const analyticsData = res.data?.analytics || res.data?.data || res.data;
+      setAnalytics(analyticsData);
       console.log("✅ Analytics fetched successfully");
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || "Failed to fetch analytics";
       console.error("❌ Analytics error:", errorMsg);
       setError(errorMsg);
-      reportAsyncError({
-        message: errorMsg,
-        code: err.response?.status === 404 ? 'NO_ANALYTICS' : 'ANALYTICS_FETCH_ERROR',
-        originalError: err,
-      });
+      
+      // Report error to async error handler
+      if (reportAsyncError) {
+        reportAsyncError({
+          message: errorMsg,
+          code: err.response?.status === 404 ? 'NO_ANALYTICS' : 'ANALYTICS_FETCH_ERROR',
+          originalError: err,
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [userId, reportAsyncError]);
+  }, [userId]); // ✅ Only userId as dependency
 
-  // 🔄 Auto fetch when user logs in - ONLY DEPENDS ON isSignedIn
-  // Use a ref to track if we've already fetched to prevent double fetches
-  const hasFetched = React.useRef(false);
-  
+  // 🔄 Auto fetch when user logs in
+  // Use refs to ensure we only fetch ONCE per authentication
   useEffect(() => {
-    if (isSignedIn && !hasFetched.current) {
-      hasFetched.current = true;
-      console.log("🔄 User authenticated, fetching profile and analytics...");
-      fetchProfile();
-      fetchAnalytics();
-    } else if (!isSignedIn) {
-      hasFetched.current = false;
+    console.log(`[auth_context] useEffect triggered — isSignedIn=${isSignedIn}, userId=${userId}`);
+    
+    if (isSignedIn) {
+      // Fetch profile only once
+      if (!hasFetchedProfile.current) {
+        hasFetchedProfile.current = true;
+        console.log("🔄 [auth_context] User authenticated, queuing profile fetch...");
+        fetchProfile();
+      }
+      
+      // Fetch analytics only once (and only if userId is available)
+      if (!hasFetchedAnalytics.current && userId) {
+        hasFetchedAnalytics.current = true;
+        console.log("🔄 [auth_context] User authenticated, queuing analytics fetch...");
+        fetchAnalytics();
+      }
+    } else {
+      // Reset refs when user signs out
+      console.log("[auth_context] User signed out, resetting fetch guards...");
+      hasFetchedProfile.current = false;
+      hasFetchedAnalytics.current = false;
       setUser(null);
       setAnalytics(null);
       setError(null);
     }
-  }, [isSignedIn, fetchProfile, fetchAnalytics]);
+  }, [isSignedIn, userId, fetchProfile, fetchAnalytics]);
 
   return (
     <AppContext.Provider

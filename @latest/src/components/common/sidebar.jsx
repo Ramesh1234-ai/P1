@@ -15,14 +15,6 @@ const Sidebar = ({ isCollapsed }) => {
     { icon:<EyeIcon size={18}/>,label:"Watch",path:"/Watch"},
     { icon:<HandCoins size={18}/>,label:"Payment",path:"/Payment"},
   ];
-  const toast ={
-    label:"Dashboard",message:Toast.success("User Succesfully Redirect To The Dashboard"),
-    label:"Analytics",message:Toast.success("User Succesfully Redirect To The Analytics"),
-    label:"Profile",message:Toast.success("User Succesfully Redirect To The Profile Page"),
-    label:"Settings",message:Toast.success("User Succesfully Redirect To The Settings"),
-    label:"Explore",message:Toast.success("User Succesfully Redirect To The Explore"),
-    label:"Watch",message:Toast.success(`${UserAvatar} Succesfully Redirect To The Watch`)
-  }
   return (
     <>
       {/* Sidebar */}
@@ -59,10 +51,6 @@ const Sidebar = ({ isCollapsed }) => {
               </button>
             );
           })}
-          <button 
-          key={i}>
-            <span className={`${isActive ? "text-red-500" : "text-gray-400"}`}>{toast.message}</span>
-          </button>
           <div className="my-4 px-4">
             <div className="h-px bg-gray-100 w-full" />
           </div>
