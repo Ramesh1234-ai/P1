@@ -18,13 +18,13 @@ const router = express.Router();
 router.get("/stream/:streamId", getStreamAnalytics);
 // ==================== PROTECTED ROUTES (Clerk Auth) ====================
 // Create or update analytics
-router.post("/create",requireAuth, createAnalytics);
+router.post("/create", requireAuth, createAnalytics);
 // Get user analytics (all streams)
 router.get("/user/:userId", requireAuth, getUserAnalytics);
 // Get analytics by date range
-router.get("/range",requireAuth, getAnalyticsByDateRange);
+router.get("/range", requireAuth, getAnalyticsByDateRange);
 // Generate comprehensive report
-router.get("/report/:userId",requireAuth, generateAnalyticsReport);
+router.get("/report/:userId", requireAuth, generateAnalyticsReport);
 // Update engagement metrics
-router.put("/engagement/:streamId",requireAuth, updateEngagementMetrics);
+router.put("/engagement/:streamId", requireAuth, updateEngagementMetrics);
 export default router;

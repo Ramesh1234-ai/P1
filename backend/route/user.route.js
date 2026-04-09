@@ -9,8 +9,9 @@ import {
 const route = express.Router();
 // ==================== PUBLIC ROUTES ===================
 // ==================== PROTECTED ROUTES (Clerk) ====================
-route.get("/profile", requireAuth(), getProfile);
-route.put("/profile", requireAuth(), updateProfile);
-route.put("/settings", requireAuth(), updateSettings);
-route.post("/apikey", requireAuth(), generateAPIKey);
+// ✅ FIXED: requireAuth should be passed as middleware (not called as function)
+route.get("/profile", requireAuth, getProfile);
+route.put("/profile", requireAuth, updateProfile);
+route.put("/settings", requireAuth, updateSettings);
+route.post("/apikey", requireAuth, generateAPIKey);
 export default route;

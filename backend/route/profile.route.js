@@ -6,9 +6,9 @@ import {
   updateUserSettings,
   getAnalytics
 } from "../controller/profile.controller.js";
-import {requireAuth } from "@clerk/express";
+import { requireAuth } from "@clerk/express";
 const route = express.Router();
-// All routes protected with Clerk JWT verification
+// ✅ All routes protected with Clerk JWT verification
 route.use(requireAuth);
 // Profile routes
 route.get("/profile/:userId", getUserProfile);

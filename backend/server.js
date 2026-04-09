@@ -38,11 +38,27 @@ nms.on('prePublish', (id, StreamPath, args) => {
 nms.on('donePublish', (id, StreamPath, args) => {
   console.log('Stream ended:', StreamPath);
 });
-connectDB();
-server.listen(PORT, () => {
-  console.log(`MongoDb is connected`)
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`📡 Waiting for RTMP streams at rtmp://localhost:${process.env.Rmtp_port}/live/`);
-  console.log(`🎥 Recording directories initialized`);
-  console.log("RTMP Server running on port 1935");
-});
+// ✅ FIXED: Properly await MongoDB connection before starting server
+(async () => {
+  try {
+    // 1️⃣  Connect to MongoDB FIRST
+    await connectDB();
+    console.log("✅ MongoDB connected successfully");
+    
+    // 2️⃣ THEN start the server
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
+      console.log(`📡 Waiting for RTMP streams at rtmp://localhost:${process.env.Rmtp_port}/live/`);
+      console.log(`🎥 Recording directories initialized`);
+      console.log("📡 RTMP Server running on port 1935");
+      console.log("✅ All systems ready - API is operational\n");
+    });
+  } catch (err) {
+    console.error("❌ Failed to start server:", err.message);
+    console.error("   Possible causes:");
+    console.error("   1. MongoDB is not running (try: mongod)");
+    console.error("   2. MONGO_URI is incorrect in .env");
+    console.error("   3. Network connection issue");
+    process.exit(1);
+  }
+})();

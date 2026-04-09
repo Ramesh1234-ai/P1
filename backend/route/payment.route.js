@@ -26,5 +26,5 @@ router.get("/stats/:userId", requireAuth, getPaymentStats);
 // Update payment status
 router.put("/status/:transactionId", requireAuth, updatePaymentStatus);
 // Delete payment record
-router.delete("/:transactionId",requireAuth, deletePayment);
+router.delete("/:transactionId", requireAuth, deletePayment);
 export default router;

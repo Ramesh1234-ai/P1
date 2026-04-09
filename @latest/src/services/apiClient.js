@@ -1,8 +1,6 @@
 import axios from "axios";
-
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-
+  import.meta.env.VITE_API_URL;
 // ─── Token Provider ───────────────────────────────────────────────────────────
 // Clerk tokens cannot be stored in localStorage — they are short-lived JWTs
 // that must be fetched fresh from Clerk on each request.
@@ -20,11 +18,10 @@ let _getClerkToken = null;
 export const setClerkTokenProvider = (fn) => {
   _getClerkToken = fn;
 };
-
 // ─── Axios instance ───────────────────────────────────────────────────────────
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: 1000,
 });
 // ─── Request interceptor — attach Clerk token ─────────────────────────────────
 apiClient.interceptors.request.use(
@@ -84,21 +81,17 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 // ─── API helpers ──────────────────────────────────────────────────────────────
-
 // Profile API
 export const profileAPI = {
   getProfile: (userId) => apiClient.get(`/auth/profile`),
   updateProfile: (userId, data) => apiClient.put(`/auth/profile`, data),
 };
-
 // Settings API
 export const settingsAPI = {
   getSettings: (userId) => apiClient.get(`/settings/${userId}`),
   updateSettings: (userId, data) => apiClient.put(`/settings/${userId}`, data),
 };
-
 // Analytics API
 export const analyticsAPI = {
   getAnalytics: (userId, range = "7days") =>
@@ -114,7 +107,6 @@ export const analyticsAPI = {
   updateEngagementMetrics: (streamId, data) =>
     apiClient.put(`/analytics/engagement/${streamId}`, data),
 };
-
 // Payment API
 export const paymentAPI = {
   createPayment: (data) => apiClient.post(`/payment/create`, data),
