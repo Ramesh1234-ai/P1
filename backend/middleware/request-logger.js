@@ -23,16 +23,13 @@ export const requestLogger = (req, res, next) => {
       const duration = Date.now() - startTime;
       const status = res.statusCode;
       const durationMs = duration;
-      
       // Warn if response took too long
       const isSlow = duration > 1000;
       const isVerySlow = duration > 5000;
       const logLevel = isVerySlow ? "🔴" : isSlow ? "🟡" : "✅";
-
       console.log(
         `${logLevel} [${status}] ${req.method.padEnd(6)} ${req.path.padEnd(30)} ${durationMs}ms`
       );
-
       if (isVerySlow) {
         console.error(
           `       ⚠️  SLOW RESPONSE! > 5 seconds — check database or processing logic`
@@ -65,7 +62,6 @@ export const requestLogger = (req, res, next) => {
 
   next();
 };
-
 /**
  * MongoDB Connection Status Check
  * Verifies DB is actually connected before processing queries
@@ -77,7 +73,6 @@ export const checkDBConnection = (req, res, next) => {
       !req.path.includes("/settings")) {
     return next();
   }
-
   // This will be set by your connectDB after successful connection
   if (!global.mongoConnected) {
     return res.status(503).json({
@@ -87,6 +82,5 @@ export const checkDBConnection = (req, res, next) => {
       suggestion: "Check MongoDB logs: sudo systemctl status mongod"
     });
   }
-
   next();
 };

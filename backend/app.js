@@ -57,7 +57,6 @@ app.use("/api/social", social);
 app.get("/api/auth/debug/setup", (req, res) => {
   const hasSecretKey = !!process.env.CLERK_SECRET_KEY;
   const hasPublishableKey = !!process.env.CLERK_PUBLISHABLE_KEY;
-  
   res.json({
     success: true,
     clerkConfiguration: {
@@ -69,7 +68,6 @@ app.get("/api/auth/debug/setup", (req, res) => {
     }
   });
 });
-
 /**
  * DEBUG: Test token validation
  * Access at: http://localhost:5000/api/auth/debug/me
@@ -90,11 +88,9 @@ app.get("/api/auth/debug/me", (req, res) => {
     }
   });
 });
-
 app.get("/api/analytics/report/:userId", (req, res) => {
   console.log("✅ REPORT API HIT");
   res.json({ ok: true });
 });
-
 // DB connection
 export default app;
