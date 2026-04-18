@@ -13,41 +13,45 @@ import social from "./route/Social.controller.js"
 import { clerkMiddleware } from "@clerk/express";
 import { generateChatResponse } from "./controller/gemini.controller.js";
 import { clerkSetupDiagnostics, logClerkAuth } from "./middleware/clerk-diagnostics.js";
-
+import { requestLogger, checkDBConnection } from "./middleware/request-logger.js";
+import rateLimit from "express-rate-limit";
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 100,  // 100 requests per 15 min
+  message: "Too many requests, please try again later"
+});
 const app = express();
-
 // ✅ Run diagnostics on startup
 clerkSetupDiagnostics();
-
 // ✅ CORS middleware — must be first
 app.use(cors({
-  origin: "*",
+  origin: [process.env.CORS_ORIGIN,"https://echo-rizz.vercel.app"],
   credentials: true
 }));
-
 // ✅ Body parser middleware
 app.use(express.json());
 
+// ✅ NEW: Request timing & duration logger
+app.use(requestLogger);
+
 // ✅ Clerk authentication middleware (MUST be before routes)
-// This middleware:
-//   1. Extracts Bearer token from Authorization header
-//   2. Validates token using CLERK_SECRET_KEY
-//   3. Populates req.auth with user data ({ userId, email, etc })
-//   4. Sets req.auth = null/undefined if no token or invalid token
 app.use(clerkMiddleware());
 
 // ✅ Log Clerk auth results for debugging
 app.use(logClerkAuth);
 
+// ✅ NEW: Check if MongoDB is connected before processing API calls
+app.use(checkDBConnection);
+
 // ==================== ROUTES ====================
-app.use("/api/auth", authRoutes);
-app.use("/api/streams", streamRoutes);
-app.use("/api", profileRoutes);
-app.use("/api/gemini", generateChatResponse);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/follower", FolllowerRoutes);
-app.use("/api/social", social);
+app.use("/api/v1/auth",limiter,authRoutes);
+app.use("/api/v1//streams",limiter, streamRoutes);
+app.use("/api/v1/profile",limiter, profileRoutes);
+app.use("/api/v1/gemini",limiter, generateChatResponse);
+app.use("/api/v1/payment",limiter, paymentRoutes);
+app.use("/api/v1/analytics",limiter, analyticsRoutes);
+app.use("/api/v1/follower",limiter, FolllowerRoutes);
+app.use("/api/v1/social",limiter, social);
 
 // ==================== DIAGNOSTIC ENDPOINTS ====================
 /**

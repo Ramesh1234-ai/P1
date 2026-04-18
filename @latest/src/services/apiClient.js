@@ -21,7 +21,7 @@ export const setClerkTokenProvider = (fn) => {
 // ─── Axios instance ───────────────────────────────────────────────────────────
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 1000,
+  timeout: 30000, // 30 seconds (increased from 20s to give API more time)
 });
 // ─── Request interceptor — attach Clerk token ─────────────────────────────────
 apiClient.interceptors.request.use(
@@ -55,27 +55,77 @@ apiClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
-// ─── Response interceptor — handle errors, prevent infinite 401 loops ─────────
+// ─── Response interceptor — handle errors, timeouts, and diagnostics ────────
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
+    const code = error.code;
+    const message = error.message;
+    const url = error.config?.url;
+    const method = error.config?.method?.toUpperCase();
 
+    // ===== TIMEOUT ERROR =====
+    if (code === "ECONNABORTED" || message?.includes("timeout")) {
+      console.error(
+        `[apiClient] ⏱️  TIMEOUT (30s exceeded) for ${method} ${url}`
+      );
+      console.error("[apiClient] Troubleshooting:");
+      console.error("  1. Is backend server running? (npm run dev)");
+      console.error("  2. Is MongoDB running? (mongod)");
+      console.error("  3. Check backend console for errors");
+      console.error("  4. Try accessing http://localhost:5000/api/auth/debug/setup");
+      console.error("  5. Network tab → find request → see response");
+      return Promise.reject({
+        ...error,
+        userMessage: "Request timed out. Backend may be slow or not responding. Check server logs."
+      });
+    }
+
+    // ===== 401 UNAUTHORIZED =====
     if (status === 401) {
-      // Mark the request so we never retry a 401 response automatically.
-      // The actual sign-out / redirect should be handled at the UI layer
-      // (e.g., via a <SignedIn> / <SignedOut> wrapper in Clerk).
       if (!error.config._isRetry) {
         console.warn(
-          "[apiClient] 401 Unauthorized — token invalid or expired. " +
-            "The user may need to sign in again."
+          "[apiClient] 🔐 401 Unauthorized — token invalid or expired"
         );
-        error.config._isRetry = true; // guard flag — do NOT resend
+        console.error("[apiClient] Next steps:");
+        console.error("  1. User may need to sign in again");
+        console.error("  2. Check Clerk configuration");
+        console.error("  3. Verify VITE_CLERK_PUBLISHABLE_KEY in .env.local");
+        error.config._isRetry = true;
       }
     }
 
+    // ===== 403 FORBIDDEN =====
     if (status === 403) {
-      console.warn("[apiClient] 403 Forbidden — insufficient permissions.");
+      console.warn("[apiClient] 🚫 403 Forbidden — insufficient permissions.");
+    }
+
+    // ===== 503 SERVICE UNAVAILABLE =====
+    if (status === 503) {
+      console.error("[apiClient] 📡 503 Service Unavailable");
+      console.error("   Backend error:", error.response?.data?.msg);
+      console.error("[apiClient] Troubleshooting:");
+      console.error("  1. Is MongoDB connected? Check backend console");
+      console.error("  2. Restart backend: npm run dev");
+    }
+
+    // ===== 5XX SERVER ERROR =====
+    if (status >= 500) {
+      console.error(`[apiClient] 🔥 ${status} Server Error for ${method} ${url}`);
+      console.error("   Backend error:", error.response?.data?.error);
+      console.error("[apiClient] Check backend logs for details");
+    }
+
+    // ===== NETWORK ERROR (no response) =====
+    if (!error.response) {
+      console.error(`[apiClient] ❌ No response from server (network error)`);
+      console.error(`   ${method} ${url}`);
+      console.error("   Possible causes:");
+      console.error("   1. Backend is not running");
+      console.error("   2. Wrong API URL in .env (VITE_API_URL)");
+      console.error("   3. CORS is blocking the request");
+      console.error("   4. Network connectivity issue");
     }
 
     return Promise.reject(error);
