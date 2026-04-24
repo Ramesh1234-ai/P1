@@ -1,4 +1,4 @@
-export const generateChatResponse = async (req, res) => {
+export const ChatModeration = async (req, res) => {
   try {
     const { message, streamId, userId } = req.body;    
     // Validate input

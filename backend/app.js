@@ -24,8 +24,12 @@ const app = express();
 // ✅ Run diagnostics on startup
 clerkSetupDiagnostics();
 // ✅ CORS middleware — must be first
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  : ['http://localhost:5173'];
+
 app.use(cors({
-  origin: [process.env.CORS_ORIGIN,"https://echo-rizz.vercel.app"],
+  origin: allowedOrigins,
   credentials: true
 }));
 // ✅ Body parser middleware
